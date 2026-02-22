@@ -2,13 +2,14 @@ import streamlit as st
 import pickle
 import re
 import nltk
-from transformers import pipeline
 from nltk.corpus import stopwords
+
 
 st.set_page_config(
     page_title="Fake News Detection System",
     layout="centered"
 )
+
 
 st.markdown("""
 <style>
@@ -43,32 +44,21 @@ html, body, [data-testid="stAppViewContainer"] {
     border-radius: 10px;
 }
 
-div[data-testid="stCheckbox"] label {
-    font-size: 15px;
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-div[data-testid="stCheckbox"] {
-    padding: 8px 12px;
-    border-radius: 10px;
-    border: 1px solid rgba(150,150,150,0.25);
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-
 footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
+
 model = pickle.load(open("fake_news_model.pkl", "rb"))
 vectorizer = pickle.load(open("tfidf_vectorizer.pkl", "rb"))
+
 
 try:
     stop_words = set(stopwords.words("english"))
 except LookupError:
     nltk.download("stopwords")
     stop_words = set(stopwords.words("english"))
+
 
 def clean_text(text):
     text = text.lower()
@@ -77,84 +67,66 @@ def clean_text(text):
     words = [word for word in words if word not in stop_words]
     return " ".join(words)
 
-@st.cache_resource
-def load_summarizer():
-    return pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
-
 st.markdown("""
 <h1 style='text-align:center;'>Fake News Detection System</h1>
 <p style='text-align:center; color:grey; font-size:16px;'>
-AI-Based News Credibility and Summarization Tool
+AI-Based News Credibility Classification Tool
 </p>
 """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
+
 st.subheader("Enter News Article Text")
 user_input = st.text_area("", height=200)
 
-enable_summary = st.checkbox("Generate article summary", value=False)
 
 if st.button("Analyze"):
     if user_input:
-            cleaned = clean_text(user_input)
-            vec = vectorizer.transform([cleaned])
+        cleaned = clean_text(user_input)
+        vec = vectorizer.transform([cleaned])
 
-            prediction = model.predict(vec)[0]
-            probability = model.predict_proba(vec)[0]
+        prediction = model.predict(vec)[0]
+        probability = model.predict_proba(vec)[0]
 
-            if prediction == 1:
-                st.markdown("""
-                <div style="
-                padding:18px;
-                border-radius:14px;
-                background-color:#e6f4ea;
-                color:#1b5e20;
-                text-align:center;
-                font-size:20px;
-                font-weight:600;
-                border:1px solid #c8e6c9;">
-                Prediction: REAL NEWS
-                </div>
-                """, unsafe_allow_html=True)
-                confidence = probability[1]
-            else:
-                st.markdown("""
-                <div style="
-                padding:18px;
-                border-radius:14px;
-                background-color:#fdecea;
-                color:#b71c1c;
-                text-align:center;
-                font-size:20px;
-                font-weight:600;
-                border:1px solid #f5c6cb;">
-                Prediction: FAKE NEWS
-                </div>
-                """, unsafe_allow_html=True)
-                confidence = probability[0]
+        if prediction == 1:
+            st.markdown("""
+            <div style="
+            padding:18px;
+            border-radius:14px;
+            background-color:#e6f4ea;
+            color:#1b5e20;
+            text-align:center;
+            font-size:20px;
+            font-weight:600;
+            border:1px solid #c8e6c9;">
+            Prediction: REAL NEWS
+            </div>
+            """, unsafe_allow_html=True)
+            confidence = probability[1]
+        else:
+            st.markdown("""
+            <div style="
+            padding:18px;
+            border-radius:14px;
+            background-color:#fdecea;
+            color:#b71c1c;
+            text-align:center;
+            font-size:20px;
+            font-weight:600;
+            border:1px solid #f5c6cb;">
+            Prediction: FAKE NEWS
+            </div>
+            """, unsafe_allow_html=True)
+            confidence = probability[0]
 
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.write(f"Confidence: {round(confidence * 100, 2)}%")
-            st.progress(float(confidence))
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.write(f"Confidence: {round(confidence * 100, 2)}%")
+        st.progress(float(confidence))
 
-            if enable_summary:
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.subheader("Article Summary")
-                with st.spinner("Analyzing article..."):
-                    if len(user_input.split()) > 50:
-                        summarizer = load_summarizer()
-                        summary = summarizer(
-                            user_input,
-                            max_length=120,
-                            min_length=40,
-                            do_sample=False
-                        )
-                        st.write(summary[0]["summary_text"])
-                    else:
-                        st.write("Text too short to summarize.")
     else:
         st.warning("Please enter some text.")
+
 
 st.markdown("<div style='flex-grow:1;'></div>", unsafe_allow_html=True)
 
@@ -162,7 +134,8 @@ st.markdown("""
 <hr>
 <div style='text-align:center; font-size:14px; color:grey;'>
 Developed by 
-<a href="https://www.linkedin.com/in/sparjunan" target="_blank" style="color:#4da6ff; text-decoration:none; font-weight:600;">
+<a href="https://www.linkedin.com/in/sparjunan" target="_blank" 
+style="color:#4da6ff; text-decoration:none; font-weight:600;">
 Prajith Arjunan S
 </a> 
 | AI-Based Fake News Detection System
