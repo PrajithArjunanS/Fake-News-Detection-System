@@ -53,7 +53,11 @@ model = pickle.load(open("fake_news_model.pkl", "rb"))
 vectorizer = pickle.load(open("tfidf_vectorizer.pkl", "rb"))
 
 
-stop_words = set(stopwords.words("english"))
+try:
+    stop_words = set(stopwords.words("english"))
+except LookupError:
+    nltk.download("stopwords", quiet=True)
+    stop_words = set(stopwords.words("english"))
 
 
 def clean_text(text):
